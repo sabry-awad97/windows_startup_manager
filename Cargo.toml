@@ -1,0 +1,14 @@
+[package]
+name = "windows_startup_manager"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# For command-line argument parsing
+clap = { version = "4.5.48", features = ["derive"] }
+
+# For interacting with the Windows Registry
+winreg = "0.55.0"
+
+# For easy error handling
+anyhow = "1.0.100"
