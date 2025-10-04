@@ -1,8 +1,8 @@
 use crate::domain::{StartupEntry, StartupRepository};
 use crate::shared::error::{Result, StartupError};
 use std::ffi::OsString;
-use winreg::enums::*;
 use winreg::RegKey;
+use winreg::enums::*;
 
 /// Windows Registry implementation of the StartupRepository trait.
 /// This follows the Dependency Inversion Principle by implementing the domain trait.
@@ -53,16 +53,16 @@ impl StartupRepository for WindowsRegistryRepository {
 
     fn list(&self) -> Result<Vec<StartupEntry>> {
         let mut entries = Vec::new();
-        
+
         for item in self.key.enum_values() {
             let (name, value) = item.map_err(|e| {
                 StartupError::RegistryError(format!("Failed to enumerate registry values: {}", e))
             })?;
-            
+
             let command = value.to_string();
             entries.push(StartupEntry::new(name, command));
         }
-        
+
         Ok(entries)
     }
 

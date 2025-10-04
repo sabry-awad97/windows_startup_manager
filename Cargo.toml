@@ -3,6 +3,10 @@ name = "windows_startup_manager"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "windows_startup_manager"
+path = "src/lib.rs"
+
 [dependencies]
 # For command-line argument parsing
 clap = { version = "4.5.48", features = ["derive"] }

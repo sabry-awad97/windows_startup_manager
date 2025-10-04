@@ -18,16 +18,13 @@ impl<'a, R: StartupRepository> KillProcessUseCase<'a, R> {
 
         // Get the entry from repository
         let entries = self.repository.list()?;
-        let entry = entries
-            .iter()
-            .find(|e| e.name == name)
-            .ok_or_else(|| {
-                StartupError::RegistryError(format!("Entry '{}' not found in startup registry", name))
-            })?;
+        let entry = entries.iter().find(|e| e.name == name).ok_or_else(|| {
+            StartupError::RegistryError(format!("Entry '{}' not found in startup registry", name))
+        })?;
 
         // Extract executable name from command
-        let exe_name = ProcessManager::extract_executable_name(&entry.command)
-            .ok_or_else(|| {
+        let exe_name =
+            ProcessManager::extract_executable_name(&entry.command).ok_or_else(|| {
                 StartupError::RegistryError(format!(
                     "Could not determine executable name from command: {}",
                     entry.command
