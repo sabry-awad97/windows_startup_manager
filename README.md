@@ -64,9 +64,17 @@ For development servers or scripts that require arguments and working directorie
 windows_startup_manager add-command <name> <command> [args...] [-d <workdir>]
 ```
 
+**Note:** If `-d` is not specified, the **current working directory** is used automatically.
+
 **Examples:**
 
-**Bun development server:**
+**Bun development server (from project directory):**
+```bash
+cd C:\projects\my-app
+windows_startup_manager add-command "BunDevServer" bun run dev
+```
+
+**Or with explicit directory:**
 ```bash
 windows_startup_manager add-command "BunDevServer" bun run dev -d "C:\projects\my-app"
 ```

@@ -45,6 +45,15 @@ fn main() {
             } else {
                 format!("{} {}", command, args.join(" "))
             };
+
+            // Use current working directory if not specified
+            let working_dir = match workdir {
+                Some(dir) => Some(dir),
+                None => std::env::current_dir()
+                    .ok()
+                    .and_then(|p| p.to_str().map(|s| s.to_string())),
+            };
+
             // Use VBScript mode by default for most reliable silent execution
             use domain::ExecutionMode;
             use_case
@@ -52,14 +61,14 @@ fn main() {
                     &name,
                     &command,
                     args,
-                    workdir.as_deref(),
+                    working_dir.as_deref(),
                     ExecutionMode::VBScript,
                 )
                 .map(|_| {
                     ConsolePresenter::show_success_add_command(
                         &name,
                         &command_display,
-                        workdir.as_deref(),
+                        working_dir.as_deref(),
                     );
                 })
         }

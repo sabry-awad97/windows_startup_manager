@@ -28,6 +28,7 @@ pub enum Commands {
         #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
         args: Vec<String>,
         /// Optional working directory where the command should run.
+        /// If not specified, uses the current working directory.
         #[arg(short = 'd', long)]
         workdir: Option<String>,
     },
