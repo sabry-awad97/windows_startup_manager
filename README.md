@@ -102,18 +102,51 @@ This will remove the "MyApp" entry from the startup registry.
 windows_startup_manager list
 ```
 
-This will display all programs currently configured to run on Windows startup.
+This will display all programs currently configured to run on Windows startup, along with their running status.
 
 **Example output:**
 
 ```
 Current startup programs:
 -------------------------
-  Name: MyApp
-  Path: C:\Program Files\MyApp\myapp.exe
+  Name: BunDevServer
+  Command: wscript.exe //B //Nologo "%APPDATA%\windows_startup_manager\launcher_abc123.vbs"
+  Status: ✓ Running (1 process(es))
+    - PID: 12345
 
-  Name: AnotherApp
-  Path: C:\Tools\another.exe
+  Name: MyApp
+  Command: C:\Program Files\MyApp\myapp.exe
+  Status: ○ Not running
+```
+
+### Kill a Running Process
+
+Kill a specific startup entry's running process:
+
+```bash
+windows_startup_manager kill "BunDevServer"
+```
+
+**Example output:**
+```
+✓ Killed 1 process(es) for 'BunDevServer'
+```
+
+### Kill All Running Processes
+
+Kill all processes associated with startup entries:
+
+```bash
+windows_startup_manager kill-all
+```
+
+**Example output:**
+```
+✓ Killed processes:
+  - wscript.exe: 2 process(es)
+  - bun.exe: 1 process(es)
+
+Total: 3 process(es) killed
 ```
 
 ## How It Works
@@ -144,18 +177,38 @@ The tool provides clear error messages for common scenarios:
 ## Important Notes
 
 ### Command Execution
-- Commands with working directories are wrapped in `cmd.exe /c "cd /d <dir> && <command>"`
-- This ensures the command runs in the correct directory context
-- Commands run in the background when Windows starts
+
+#### **Silent Background Execution (Default)**
+Commands use **VBScript wrappers** for the most reliable silent execution:
+- ✅ **Zero window flash** - truly invisible
+- ✅ Automatic VBScript file creation in `%APPDATA%\windows_startup_manager\`
+- ✅ Works on all Windows versions
+- ✅ Low resource overhead (~5-10 MB)
+
+#### **How It Works**
+1. Tool creates a VBScript file (e.g., `launcher_abc123.vbs`)
+2. VBScript executes your command with hidden window
+3. Registry points to: `wscript.exe //B //Nologo "path\to\launcher.vbs"`
+4. No visible windows appear when Windows starts
+
+#### **Alternative Methods**
+See `docs/WINDOWS_EXECUTION_METHODS.md` for:
+- PowerShell hidden window mode
+- Task Scheduler integration
+- Windows Services
+- Native Win32 API approaches
 
 ### Best Practices for Development Servers
 1. **Use absolute paths** for working directories
 2. **Test commands manually** before adding to startup
-3. **Consider logging**: Redirect output to log files for debugging
+3. **Monitor background processes**: Use Task Manager to verify servers are running
+4. **Check logs**: Since output is hidden, redirect to log files for debugging:
    ```bash
-   windows_startup_manager add-command "BunServer" cmd /c "bun run dev > server.log 2>&1" -d "C:\projects\app"
+   # PowerShell will handle redirection
+   windows_startup_manager add-command "BunServer" bun run dev '>' server.log '2>&1' -d "C:\projects\app"
    ```
-4. **Remove when not needed**: Development servers on startup can slow down boot time
+5. **Remove when not needed**: Development servers on startup can slow down boot time
+6. **Kill processes**: Use Task Manager or `taskkill` to stop background servers
 
 ### Security Considerations
 - Only add trusted commands to startup

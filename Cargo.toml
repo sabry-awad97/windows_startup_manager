@@ -12,3 +12,6 @@ winreg = "0.55.0"
 
 # For easy error handling
 anyhow = "1.0.100"
+
+# For colored terminal output
+colored = "3.0.0"
