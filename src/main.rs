@@ -23,6 +23,19 @@ enum Commands {
         /// The full path to the executable file to run.
         path: String,
     },
+    /// Adds a command with arguments to the startup list (e.g., "bun run dev").
+    AddCommand {
+        /// The name of the entry in the startup registry.
+        name: String,
+        /// The command to execute (e.g., "bun").
+        command: String,
+        /// Arguments for the command (e.g., "run dev").
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        args: Vec<String>,
+        /// Optional working directory where the command should run.
+        #[arg(short = 'd', long)]
+        workdir: Option<String>,
+    },
     /// Removes a program from the startup list.
     Remove {
         /// The name of the entry to remove from the startup registry.
@@ -72,6 +85,53 @@ impl StartupManager {
         Ok(())
     }
 
+    /// Adds a command with arguments to the startup registry.
+    /// For commands with working directories, wraps them in a cmd.exe call.
+    fn add_command(
+        &self,
+        name: &str,
+        command: &str,
+        args: &[String],
+        workdir: Option<&str>,
+    ) -> Result<()> {
+        let command_string = if args.is_empty() {
+            command.to_string()
+        } else {
+            format!("{} {}", command, args.join(" "))
+        };
+
+        // If a working directory is specified, wrap the command in cmd.exe
+        let registry_value = if let Some(dir) = workdir {
+            // Validate working directory exists
+            if !Path::new(dir).exists() {
+                return Err(anyhow::anyhow!(
+                    "The specified working directory does not exist: {}",
+                    dir
+                ));
+            }
+            // Use cmd.exe to change directory and run the command
+            format!("cmd.exe /c \"cd /d \"{}\" && {}\"" , dir, command_string)
+        } else {
+            command_string
+        };
+
+        self.key
+            .set_value(name, &OsString::from(&registry_value))
+            .with_context(|| {
+                format!(
+                    "Failed to set command '{}' in the registry",
+                    name
+                )
+            })?;
+        
+        println!("Successfully added command '{}' to startup.", name);
+        if let Some(dir) = workdir {
+            println!("  Working directory: {}", dir);
+        }
+        println!("  Command: {}", command_string);
+        Ok(())
+    }
+
     /// Removes an entry from the startup registry.
     fn remove(&self, name: &str) -> Result<()> {
         self.key
@@ -111,6 +171,14 @@ fn main() -> Result<()> {
     match cli.command {
         Commands::Add { name, path } => {
             manager.add(&name, &path)?;
+        }
+        Commands::AddCommand {
+            name,
+            command,
+            args,
+            workdir,
+        } => {
+            manager.add_command(&name, &command, &args, workdir.as_deref())?;
         }
         Commands::Remove { name } => {
             manager.remove(&name)?;
