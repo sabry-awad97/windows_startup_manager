@@ -1,17 +1,26 @@
 # Windows Startup Manager
 
-A simple and efficient command-line tool to manage Windows startup programs via the registry.
+A professional command-line tool to manage Windows startup programs via the registry with a beautiful, colorful interface.
 
 ## Features
 
+### **Core Functionality**
 - ✅ **Add** programs to Windows startup
 - ✅ **Add commands** with arguments (e.g., `bun run dev`, `python -m uvicorn`)
 - ✅ **Working directory** support for commands
 - ✅ **Remove** programs from Windows startup
-- ✅ **List** all current startup programs
-- ✅ No administrator privileges required (uses `HKEY_CURRENT_USER`)
-- ✅ Path validation before adding entries
-- ✅ Clean error handling with contextual messages
+- ✅ **List** all startup programs with **running status** (shows PIDs)
+- ✅ **Kill** specific process by entry name
+- ✅ **Kill all** processes from startup entries
+
+### **User Experience**
+- 🎨 **Colorful terminal output** for better readability
+- 📊 **Status indicators** - see which processes are running
+- 🔍 **Process monitoring** - displays PIDs of running processes
+- ⚡ **Silent execution** - VBScript wrappers for truly invisible background processes
+- 🛡️ **No admin required** - uses `HKEY_CURRENT_USER`
+- ✅ **Path validation** before adding entries
+- 🎯 **Clean error messages** with contextual information
 
 ## Installation
 
@@ -104,20 +113,32 @@ windows_startup_manager list
 
 This will display all programs currently configured to run on Windows startup, along with their running status.
 
-**Example output:**
+**Example output (with colors):**
 
 ```
 Current startup programs:
--------------------------
-  Name: BunDevServer
+═════════════════════════════════════════════════
+
+[1] BunDevServer
   Command: wscript.exe //B //Nologo "%APPDATA%\windows_startup_manager\launcher_abc123.vbs"
   Status: ✓ Running (1 process(es))
-    - PID: 12345
+    PID: 12345
 
-  Name: MyApp
+[2] MyApp
   Command: C:\Program Files\MyApp\myapp.exe
   Status: ○ Not running
+
+──────────────────────────────────────────────────
+Total: 2 entries
 ```
+
+**Color scheme:**
+- 🟢 **Green** - Success, running processes
+- 🔵 **Cyan** - Entry names, counts
+- 🟡 **Yellow** - PIDs, file paths
+- ⚪ **White** - Commands, content
+- ⚫ **Gray** - Inactive items, separators
+- 🔴 **Red** - Errors
 
 ### Kill a Running Process
 
@@ -164,6 +185,7 @@ This registry key contains programs that run automatically when the current user
 - **[clap](https://crates.io/crates/clap)** - Command-line argument parsing
 - **[winreg](https://crates.io/crates/winreg)** - Windows Registry access
 - **[anyhow](https://crates.io/crates/anyhow)** - Error handling with context
+- **[colored](https://crates.io/crates/colored)** - Beautiful terminal colors
 
 ## Error Handling
 
@@ -215,21 +237,155 @@ See `docs/WINDOWS_EXECUTION_METHODS.md` for:
 - Validate all paths and commands before adding
 - Commands run with your user privileges (not elevated)
 
-## Safety
+## Visual Design
 
+### **Colorful Terminal Output**
+
+This tool uses the `colored` crate to provide a professional, visually appealing interface:
+
+#### **Color Scheme**
+- **Green (✓)** - Success messages, running processes
+- **Red (✗)** - Error messages, failures
+- **Cyan** - Entry names, primary identifiers
+- **Yellow** - PIDs, file paths, counts
+- **White** - Commands, general content
+- **Gray (dimmed)** - Labels, metadata, separators
+- **Bright Black** - Inactive items, disabled states
+
+#### **Visual Elements**
+- `═` Heavy separators for headers
+- `─` Light separators for sections
+- `•` Bullet points for lists
+- `✓` Success indicators
+- `✗` Error indicators
+- `○` Inactive/not running indicators
+- `[1]` Numbered items
+
+#### **Example Output**
+
+```
+✓ Successfully added BunDevServer to startup.
+  Working directory: C:\projects\my-app
+  Command: bun run dev
+
+Current startup programs:
+═════════════════════════════════════════════════
+
+[1] BunDevServer
+  Command: wscript.exe //B //Nologo "..."
+  Status: ✓ Running (1 process(es))
+    PID: 12345
+
+──────────────────────────────────────────────────
+Total: 1 entries
+```
+
+For more details on the colored implementation, see [`docs/COLORED_GUIDE.md`](docs/COLORED_GUIDE.md).
+
+---
+
+## Architecture
+
+This project follows **Domain-Driven Design (DDD)** and **SOLID principles**:
+
+```
+src/
+├── domain/          # Business logic (models, repository trait, validators)
+├── application/     # Use cases (add, remove, list, kill operations)
+├── infrastructure/  # Windows Registry & Process management
+├── interfaces/      # CLI and presentation layer
+└── shared/          # Error types and utilities
+```
+
+For detailed architecture documentation, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+---
+
+## Documentation
+
+- **[README.md](README.md)** - This file (getting started guide)
+- **[QUICK_START.md](QUICK_START.md)** - Quick reference for common commands
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and design patterns
+- **[docs/WINDOWS_EXECUTION_METHODS.md](docs/WINDOWS_EXECUTION_METHODS.md)** - Windows silent execution deep dive
+- **[docs/COLORED_GUIDE.md](docs/COLORED_GUIDE.md)** - Colored crate implementation guide
+
+---
+
+## Safety & Security
+
+### **Safety**
 - ✅ Only modifies the current user's startup entries
 - ✅ Validates file paths before adding entries
-- ✅ Provides clear error messages
+- ✅ Provides clear, colored error messages
 - ✅ No system-wide changes (no admin required)
+- ✅ VBScript files stored in user's `%APPDATA%` directory
 
-## License
+### **Security Considerations**
+- Only add trusted commands to startup
+- Validate all paths and commands before adding
+- Commands run with your user privileges (not elevated)
+- VBScript files are user-specific and isolated
+- Process management uses Windows built-in tools (`wmic`, `taskkill`)
 
-[Add your license here]
+---
+
+## Troubleshooting
+
+### **Colors not showing?**
+On Windows, ANSI colors should work by default on Windows 10+. If colors aren't showing:
+- Ensure you're using Windows Terminal or a modern terminal
+- Update to the latest version of PowerShell
+- Check if your terminal supports ANSI escape codes
+
+### **Process not starting on boot?**
+- Verify the command works manually first
+- Check the working directory exists
+- Use `list` to verify the entry was added correctly
+- Check Windows Event Viewer for startup errors
+
+### **Can't kill a process?**
+- Verify the process is actually running with `list`
+- Check Task Manager for the actual process name
+- Use `taskkill /F /IM <process>.exe` as a fallback
+- Some processes may require admin privileges to kill
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to:
+- Report bugs via GitHub Issues
+- Suggest new features
+- Submit Pull Requests
+- Improve documentation
 
-## Author
+### **Development Setup**
+```bash
+git clone <repository-url>
+cd windows_startup_manager
+cargo build
+cargo test
+cargo clippy -- -D warnings
+```
 
-[Add your information here]
+---
+
+## License
+
+MIT License - See LICENSE file for details
+
+---
+
+## Acknowledgments
+
+Built with:
+- **Rust** - Systems programming language
+- **clap** - Command-line argument parsing
+- **winreg** - Windows Registry access
+- **colored** - Terminal colors
+- **Domain-Driven Design** principles
+- **SOLID** design patterns
+
+---
+
+**Made with ❤️ for Windows developers who want beautiful, functional CLI tools**
